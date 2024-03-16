@@ -1,7 +1,7 @@
 # Developper Journal
 - 27/01/2024
     - deployed superset to server using docker prod version.
-    - deployed Keyvloak to server using docker.
+    - deployed Keycloak to server using docker.
 - 03/02/2024
     - added networking support for docker containers.
     - added .env in docker prod folder.
@@ -10,3 +10,7 @@
 - 04/02/2024
     - changed  the AUTH_USER_REGISTRATION_ROLE to admin.
     - added embedding option to superset.
+- 07/03/2024
+    - changed the CustomAuthOAuthView to work with angular app using the token provided.
+    - added CustomSsoSecurityManager to mape roles from keycloak to users in superset.
+    - changed the config in keycloak to work without using client-secret.

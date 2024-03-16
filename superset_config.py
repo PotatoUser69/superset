@@ -60,62 +60,7 @@ class CustomAuthOAuthView(AuthOAuthView):
                 # Check if there is a next url on state
                 return redirect(next_url)
         else:
-            if provider not in self.appbuilder.sm.oauth_remotes:
-                flash("Provider not supported.", "warning")
-                logging.warning("OAuth authorized got an unknown provider %s", provider)
-                return redirect(self.appbuilder.get_url_for_login)
-            try:
-                resp = self.appbuilder.sm.oauth_remotes[provider].authorize_access_token()
-            except Exception as e:
-                logging.error("Error authorizing OAuth access token: %s", e)
-                flash("The request to sign in was denied.", "error")
-                return redirect(self.appbuilder.get_url_for_login)
-            if resp is None:
-                flash("You denied the request to sign in.", "warning")
-                return redirect(self.appbuilder.get_url_for_login)
-            logging.debug("OAUTH Authorized resp: %s", resp)
-            # Retrieves specific user info from the provider
-            try:
-                self.appbuilder.sm.set_oauth_session(provider, resp)
-                userinfo = self.appbuilder.sm.oauth_user_info(provider, resp)
-            except Exception as e:
-                logging.error("Error returning OAuth user info: %s", e)
-                user = None
-            else:
-                logging.debug("User info retrieved from %s: %s", provider, userinfo)
-                # User email is not whitelisted
-                if provider in self.appbuilder.sm.oauth_whitelists:
-                    whitelist = self.appbuilder.sm.oauth_whitelists[provider]
-                    allow = False
-                    for email in whitelist:
-                        if "email" in userinfo and re.search(email, userinfo["email"]):
-                            allow = True
-                            break
-                    if not allow:
-                        flash("You are not authorized.", "warning")
-                        return redirect(self.appbuilder.get_url_for_login)
-                else:
-                    logging.debug("No whitelist for OAuth provider")
-                user = self.appbuilder.sm.auth_user_oauth(userinfo)
-
-            if user is None:
-                flash(as_unicode(self.invalid_login_message), "warning")
-                return redirect(self.appbuilder.get_url_for_login)
-            else:
-                try:
-                    state = jwt.decode(
-                        request.args["state"], session["oauth_state"], algorithms=["HS256"]
-                    )
-                except (jwt.InvalidTokenError, KeyError):
-                    flash(as_unicode("Invalid state signature"), "warning")
-                    return redirect(self.appbuilder.get_url_for_login)
-
-                login_user(user)
-                next_url = self.appbuilder.get_url_for_index
-                # Check if there is a next url on state
-                if "next" in state and len(state["next"]) > 0:
-                    next_url = get_safe_redirect(state["next"][0])
-                return redirect(next_url)
+            return super().oauth_authorized(provider)
 class CustomSsoSecurityManager(SupersetSecurityManager):
 
     authoauthview = CustomAuthOAuthView
@@ -180,7 +125,7 @@ OAUTH_PROVIDERS = [
                             },
                         'server_metadata_url': os.environ['SERVER_METADATA_URL']
                         ,'api_base_url': os.environ['API_BASE_URL']
-                        ,'access_token_url':'https://cea.hexalogy.com/realms/Hexalogy/protocol/openid-connect/token',
+                        ,'access_token_url':'https://team.hexalogy.com/realms/Hexalogy/protocol/openid-connect/token',
                         "request_token_url": None,
                         }
             ,}
